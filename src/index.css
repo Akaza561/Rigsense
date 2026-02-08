@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Gloock&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #000000;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: linear-gradient(to top, #3A0CA3, #050505);
+  overflow-x: hidden;
+  /* Only hide horizontal overflow */
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.title {
+  font-family: 'Gloock', serif;
+  font-size: 10rem;
+  font-weight: 900;
+  letter-spacing: 0.5rem;
+  background: linear-gradient(to bottom right, #ffffff, #a0a0a0);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.2));
+  animation: fadeIn 1.5s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+  margin: 0;
+  line-height: 1;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@media (max-width: 600px) {
+  .title {
+    font-size: 5rem;
+    letter-spacing: 0.2rem;
+  }
+}
