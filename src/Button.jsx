@@ -38,7 +38,7 @@ const StyledWrapper = styled.div`
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
       Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif,
       Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 900;
     line-height: 1.5;
     margin: 0;
@@ -69,7 +69,7 @@ const StyledWrapper = styled.div`
     border-width: 2px;
     border-color: rgba(255, 255, 255, 0.3);
     box-shadow: 0 0 20px rgba(58, 12, 163, 0.5);
-    padding: 1.0rem 2rem;
+    padding: 0.8rem 1.6rem;
     z-index: 0;
   }
 

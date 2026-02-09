@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react'
+// import { useState, useEffect } from 'react'
 import './index.css'
 import Button from './Button'
 import SimpleButton from './SimpleButton'
 import Radio from './Radio'
 import Card from './Card'
 import ProductCard from './ProductCard'
-import Loader from './Loader'
-import { motion, AnimatePresence } from 'framer-motion'
+import AnoAI from './components/ui/animated-shader-background'
+
+import { motion } from 'framer-motion'
 
 function App() {
   return (
     <div style={{ width: '100%', minHeight: '100vh' }}>
-      <Loader />
+      <AnoAI />
       <div className="hero" style={{ height: '100vh', width: '100%', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: '0rem', paddingLeft: '10vh' }}>
         <motion.div
           initial={{ opacity: 0, y: -20 }}

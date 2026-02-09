@@ -54,41 +54,27 @@ const StyledWrapper = styled.div`
     font-family: courier, sans;
   }
 
-  .card {
     display: block;
     position: relative;
     max-width: 300px;
     max-height: 320px;
-    background-color: #1a1a1a;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-radius: 10px;
     padding: 2em 1.2em;
     margin: 12px;
     text-decoration: none;
     z-index: 0;
     overflow: hidden;
-    background: linear-gradient(to bottom, #1a1a1a, #0a0a0a);
     font-family: 'Inter', sans-serif;
-    border: 1px solid #333;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
 
-  .card:before {
-    content: '';
-    position: absolute;
-    z-index: -1;
-    top: -16px;
-    right: -16px;
-    background: linear-gradient(135deg, #3A0CA3, #392883ff);
-    height: 32px;
-    width: 32px;
-    border-radius: 32px;
-    transform: scale(1);
-    transform-origin: 50% 50%;
-    transition: transform 0.35s ease-out;
-  }
+  
 
-  .card:hover:before {
-    transform: scale(28);
-  }
+ 
 
   .card:hover .small-desc {
     transition: all 0.5s ease-out;
