@@ -53,6 +53,17 @@ body {
   line-height: 1;
 }
 
+.description {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 300;
+  letter-spacing: 0.1rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 1rem;
+  margin-left: 0.5rem;
+  max-width: 900px;
+}
+
 @keyframes fadeIn {
   to {
     opacity: 1;
@@ -76,5 +87,11 @@ body {
   .title {
     font-size: 5rem;
     letter-spacing: 0.2rem;
+  }
+
+  .description {
+    font-size: 1rem;
+    letter-spacing: 0.05rem;
+    margin-left: 0;
   }
 }

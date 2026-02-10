@@ -1,30 +1,36 @@
 import React, { useEffect, useRef } from 'react';
-import * as THREE from 'three';
+import { Scene, OrthographicCamera, WebGLRenderer, ShaderMaterial, Vector2, PlaneGeometry, Mesh } from 'three';
 
-const AnoAI = () => {
-    const containerRef = useRef(null);
+const AnoAI = React.memo(() => {
+  const containerRef = useRef(null);
 
-    useEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-        const scene = new THREE.Scene();
-        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        container.appendChild(renderer.domElement);
+    const scene = new Scene();
+    const camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-        const material = new THREE.ShaderMaterial({
-            uniforms: {
-                iTime: { value: 0 },
-                iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
-            },
-            vertexShader: `
+    // Performance: Disable antialias for background shader
+    const renderer = new WebGLRenderer({ antialias: false, alpha: true });
+
+    // Performance: Cap pixel ratio to 1
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    container.appendChild(renderer.domElement);
+
+    const material = new ShaderMaterial({
+      uniforms: {
+        iTime: { value: 0 },
+        iResolution: { value: new Vector2(window.innerWidth, window.innerHeight) }
+      },
+      vertexShader: `
         void main() {
           gl_Position = vec4(position, 1.0);
         }
       `,
-            fragmentShader: `
+      fragmentShader: `
         uniform float iTime;
         uniform vec2 iResolution;
 
@@ -84,43 +90,43 @@ const AnoAI = () => {
           gl_FragColor = o * 1.5;
         }
       `
-        });
+    });
 
-        const geometry = new THREE.PlaneGeometry(2, 2);
-        const mesh = new THREE.Mesh(geometry, material);
-        scene.add(mesh);
+    const geometry = new PlaneGeometry(2, 2);
+    const mesh = new Mesh(geometry, material);
+    scene.add(mesh);
 
-        let frameId;
-        const animate = () => {
-            material.uniforms.iTime.value += 0.025;
-            renderer.render(scene, camera);
-            frameId = requestAnimationFrame(animate);
-        };
-        animate();
+    let frameId;
+    const animate = () => {
+      material.uniforms.iTime.value += 0.025;
+      renderer.render(scene, camera);
+      frameId = requestAnimationFrame(animate);
+    };
+    animate();
 
-        const handleResize = () => {
-            const width = window.innerWidth;
-            const height = window.innerHeight;
-            renderer.setSize(width, height);
-            material.uniforms.iResolution.value.set(width, height);
-        };
-        window.addEventListener('resize', handleResize);
+    const handleResize = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      renderer.setSize(width, height);
+      material.uniforms.iResolution.value.set(width, height);
+    };
+    window.addEventListener('resize', handleResize);
 
-        return () => {
-            cancelAnimationFrame(frameId);
-            window.removeEventListener('resize', handleResize);
-            if (container && renderer.domElement) {
-                container.removeChild(renderer.domElement);
-            }
-            geometry.dispose();
-            material.dispose();
-            renderer.dispose();
-        };
-    }, []);
+    return () => {
+      cancelAnimationFrame(frameId);
+      window.removeEventListener('resize', handleResize);
+      if (container && renderer.domElement) {
+        container.removeChild(renderer.domElement);
+      }
+      geometry.dispose();
+      material.dispose();
+      renderer.dispose();
+    };
+  }, []);
 
-    return (
-        <div ref={containerRef} className="fixed top-0 left-0 w-full h-full -z-10" />
-    );
-};
+  return (
+    <div ref={containerRef} className="fixed top-0 left-0 w-full h-full -z-10" />
+  );
+});
 
 export default AnoAI;

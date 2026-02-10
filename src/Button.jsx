@@ -1,18 +1,29 @@
 import React from 'react';
 import styled from 'styled-components';
+import { Link } from 'react-router-dom';
 
-const Button = () => {
+const Button = ({ text = "RIG UP!", to, onClick }) => {
+  const content = (
+    <span className="text-container">
+      <span className="text">{text}
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" style={{ width: '1.2em', height: '1.2em', display: 'inline-block', verticalAlign: 'middle', marginLeft: '12px' }}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+        </svg>
+      </span>
+    </span>
+  );
+
   return (
     <StyledWrapper>
-      <button className="btn-17">
-        <span className="text-container">
-          <span className="text">RIG UP!
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" style={{ width: '1.2em', height: '1.2em', display: 'inline-block', verticalAlign: 'middle', marginLeft: '12px' }}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
-          </span>
-        </span>
-      </button>
+      {to ? (
+        <Link to={to} className="btn-17">
+          {content}
+        </Link>
+      ) : (
+        <button className="btn-17" onClick={onClick}>
+          {content}
+        </button>
+      )}
     </StyledWrapper>
   );
 }
@@ -45,6 +56,8 @@ const StyledWrapper = styled.div`
     -webkit-mask-image: -webkit-radial-gradient(#000, #e2e2e2ff);
     padding: 0;
     text-transform: uppercase;
+    text-decoration: none;
+    display: inline-block;
   }
 
   .btn-17:disabled {

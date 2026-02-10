@@ -43,7 +43,7 @@ const StyledWrapper = styled.div`
     overflow: hidden;
     top: 0;
     right: 0;
-    background: linear-gradient(135deg, #3A0CA3, #3709b7ff);
+    background: linear-gradient(135deg, #291dd1ff, #3c20d8ff);
     border-radius: 0 4px 0 32px;
   }
 
@@ -54,6 +54,7 @@ const StyledWrapper = styled.div`
     font-family: courier, sans;
   }
 
+  .card {
     display: block;
     position: relative;
     max-width: 300px;
