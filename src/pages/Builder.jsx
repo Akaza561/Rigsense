@@ -2,6 +2,9 @@ import { useState, lazy, Suspense } from 'react'
 import { m, LazyMotion, domAnimation } from 'framer-motion'
 import styled from 'styled-components'
 import Button from '../Button'
+import BuildResult from '../components/BuildResult'
+
+import { generateBuild } from '../utils/builderLogic'
 
 const AnoAI = lazy(() => import('../components/ui/animated-shader-background'))
 
@@ -89,7 +92,7 @@ const UseCaseCard = styled.div`
 
 
 
-function BuilderForm() {
+function BuilderForm({ onBuild, isBuilding }) {
     const [budget, setBudget] = useState(50000)
     const [useCase, setUseCase] = useState('')
 
@@ -130,13 +133,37 @@ function BuilderForm() {
             </div>
 
             <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
-                <Button text="Get Rigged" onClick={() => console.log('Building...')} />
+                <Button
+                    text={isBuilding ? "Building..." : "Get Rigged"}
+                    onClick={() => {
+                        if (!useCase) return alert('Please select a use case')
+                        onBuild(budget, useCase)
+                    }}
+                />
             </div>
         </FormSection>
     )
 }
 
 function Builder() {
+    const [buildResult, setBuildResult] = useState(null)
+    const [isBuilding, setIsBuilding] = useState(false)
+    const [selectedUseCase, setSelectedUseCase] = useState('')
+
+    const handleBuild = async (budget, useCase) => {
+        setIsBuilding(true)
+        setSelectedUseCase(useCase)
+        try {
+            const result = await generateBuild(budget, useCase)
+            setBuildResult(result)
+        } catch (error) {
+            console.error(error)
+            alert('Build failed: ' + error.message)
+        } finally {
+            setIsBuilding(false)
+        }
+    }
+
     return (
         <LazyMotion features={domAnimation}>
             <div style={{ width: '100%', minHeight: '100vh' }}>
@@ -151,7 +178,15 @@ function Builder() {
                     >
                         Configure Your Build
                     </Title>
-                    <BuilderForm />
+                    {!buildResult ? (
+                        <BuilderForm onBuild={handleBuild} isBuilding={isBuilding} />
+                    ) : (
+                        <BuildResult
+                            build={buildResult}
+                            useCase={selectedUseCase}
+                            onReset={() => setBuildResult(null)}
+                        />
+                    )}
                 </Container>
             </div>
         </LazyMotion>

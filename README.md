@@ -1,16 +1,72 @@
-# React + Vite
+# RIGSENSE - PC Builder (College Mini-Project)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**RIGSENSE** is an AI-Powered PC Configuration Assistant designed to help users build computers based on their specific budget and use cases (Gaming, Programming, Video Editing).
 
-Currently, two official plugins are available:
+This project demonstrates the use of **Modern Web Technologies** to solve a real-world problem: the complexity of choosing compatible PC parts.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 💻 Tech Stack (What we used)
+*   **Frontend:** React (Vite)
+*   **Language:** JavaScript (ES6+)
+*   **Styling:** Styled Components & Vanilla CSS
+*   **Graphics:** Three.js (for the animated background)
+*   **Animation:** Framer Motion
+*   **Logic:** Custom JavaScript Algorithm for part compatibility and budget optimization.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🚀 How to Run This Project (Step-by-Step)
 
-## Expanding the ESLint configuration
+If you are new to this, don't worry! Just follow these exact steps.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Step 1: Install Node.js
+We need a tool called **Node.js** to run the website code.
+1.  Go to [nodejs.org](https://nodejs.org/).
+2.  Download the **LTS Version** (Recommended for Most Users).
+3.  Install it like any normal program.
+
+### Step 2: Download the Code
+1.  Click the Green **Code** button on GitHub.
+2.  Click **Download ZIP**.
+3.  Unzip the folder and open it.
+
+### Step 3: Open in VS Code
+1.  Right-click the folder and select **Open with Code** (or drag the folder into VS Code).
+2.  In VS Code, open the **Terminal** (Click `Terminal` -> `New Terminal` in the top menu).
+
+### Step 4: Install Libraries
+In the terminal, type this command and press Enter:
+```bash
+npm install
+```
+This single command automatically installs **everything** listed in our project file, including:
+*   **React** (The UI library)
+*   **Three.js** (For 3D graphics)
+*   **Framer Motion** (For smooth animations)
+*   **Styled Components** (For CSS-in-JS)
+*   **Tailwind CSS** (If configured)
+
+*(You don't need to install them one by one. `npm install` does it all!)*
+
+### Step 5: Start the Website!
+Once the installation finishes, type this command:
+```bash
+npm run dev
+```
+
+You should see a message like:
+`> Local: http://localhost:5173/`
+
+**Control + Click** that link to open the website in your browser.
+
+---
+
+## 🛠 Troubleshooting (If something breaks)
+
+*   **Error: 'npm' is not recognized:** You didn't install Node.js correctly. Restart your computer and try again.
+*   **Website is blank?** Check the terminal for red error messages.
+*   **Want to stop the server?** Click in the terminal and press `Ctrl + C`.
+
+## 📁 Project Structure (Where things are)
+*   **src/pages/Builder.jsx**: The main page where the PC building happens.
+*   **src/utils/builderLogic.js**: The "Brain" that picks the parts.
+*   **public/data/components.csv**: The list of all PC parts (prices, specs).

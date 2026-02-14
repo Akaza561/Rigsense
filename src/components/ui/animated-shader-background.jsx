@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Scene, OrthographicCamera, WebGLRenderer, ShaderMaterial, Vector2, PlaneGeometry, Mesh } from 'three';
 
-const AnoAI = React.memo(() => {
+const AnoAI = () => {
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -10,14 +10,8 @@ const AnoAI = React.memo(() => {
 
     const scene = new Scene();
     const camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
-
-    // Performance: Disable antialias for background shader
-    const renderer = new WebGLRenderer({ antialias: false, alpha: true });
-
-    // Performance: Cap pixel ratio to 1
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1));
+    const renderer = new WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-
     container.appendChild(renderer.domElement);
 
     const material = new ShaderMaterial({
@@ -127,6 +121,6 @@ const AnoAI = React.memo(() => {
   return (
     <div ref={containerRef} className="fixed top-0 left-0 w-full h-full -z-10" />
   );
-});
+};
 
 export default AnoAI;
