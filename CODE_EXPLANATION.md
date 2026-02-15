@@ -1,74 +1,83 @@
-# RIGSENSE Code Explanation (Study Guide)
+# 📘 RIGSENSE - Technical Code Deep Dive
 
-This guide breaks down the key parts of the project so you can explain it in your college presentation.
+This document explains the **internal architecture** of RIGSENSE. Use this to understand *how* the code works under the hood.
 
-## 1. The "Brain" (Algorithm)
-**File:** `src/utils/builderLogic.js`
+---
 
-This file contains the logic that picks the PC parts. It mimics a human expert.
+## 🏗️ 1. Architecture Overview (The "Big Picture")
 
-### Key Concepts:
-1.  **Platform Validation (The Safety Check):**
-    *   Before picking anything, the code scans the `components.csv` file.
-    *   It checks: *"Do we have DDR5 RAM?"*
-    *   If NO, it automatically removes any Motherboard or CPU that requires DDR5.
-    *   *Why?* This prevents the "Build Failed" error where the algorithm picks a CPU but can't find compatible RAM.
+RIGSENSE follows a **Client-Server Architecture** (Monorepo):
 
-2.  **Use Case Mapping:**
-    *   It translates user input (e.g., "Programming") into technical tags.
-    *   `Programming` -> Looks for parts tagged `Productivity` or `General`.
-    *   `Gaming` -> Looks for parts tagged `Gaming`.
+1.  **Frontend (`/frontend`)**: A React Single Page Application (SPA). It handles the UI, animations, and user intent.
+2.  **Backend (`/backend`)**: A REST API (Express.js). It processes data, connects to MongoDB, and executes logic.
+3.  **Database (MongoDB Atlas)**: Stores component data (Processors, GPUs, RAM, etc.).
 
-3.  **Budget "Buckets":**
-    *   It splits the total budget into percentages based on the Use Case.
-    *   *Gaming:* 45% GPU, 15% CPU.
-    *   *Programming:* 35% CPU, 10% GPU.
+---
 
-4.  **The Selection Loop (How it picks):**
-    *   For each part (CPU, GPU, RAM...), it works like a funnel:
-        1.  **Filter by Purpose:** Keeps only parts that match the `Use Case`.
-        2.  **Filter by Budget:** Removes parts that are too expensive for that "bucket".
-        3.  **Sort by Performance:** Picks the part with the **highest Performance Score** (from the CSV).
+## 🎨 2. Frontend Deep Dive (`/frontend`)
 
-## 2. The "Face" (User Interface)
-**File:** `src/pages/Builder.jsx`
+The frontend is built with **React + Vite**.
 
-This is a **React Component**. It manages what the user *sees*.
+### Core Files
+*   **`src/main.jsx`**: The entry point. It mounts the React App to the DOM.
+*   **`src/App.jsx`**: The main router. It decides which page to show (`Home` vs `Builder`).
 
-*   **State (`useState`):**
-    *   `budget`: Stores the number (e.g., 50000).
-    *   `useCase`: Stores the string (e.g., "Gaming").
-    *   `buildResult`: Stores the final list of parts (or `null` if not built yet).
-*   **The Flow:**
-    *   When the user clicks "Get Rigged", it calls the `handleBuild` function.
-    *   `handleBuild` calls the `generateBuild` function (from the "Brain").
-    *   While waiting, it sets `isBuilding = true` to show "Building...".
-    *   Once the result comes back, it displays the list of parts.
+### Key Components
+#### `src/pages/Builder.jsx`
+This is the "Brain" of the frontend.
+*   **State Management (`useState`):** Tracks `budget`, `useCase`, and `isBuilding`.
+*   **API Calls:** Uses `fetch()` to send data to `http://localhost:5000/api/build`.
+*   **Visuals:** Uses `framer-motion` for the smooth fade-in effects.
 
-## 3. The "Beauty" (Shader Background)
-**File:** `src/components/ui/animated-shader-background.jsx`
+#### `src/components/ui/animated-shader-background.jsx`
+*   **Technology:** Uses **Three.js** and **GLSL Shaders**.
+*   **How it works:** It creates a mathematical function (Fractal Brownian Motion) that runs on the GPU, creating the "Purple Smoke" effect.
+*   **Optimization:** It uses a low-resolution render target upscaled to fit the screen to save battery.
 
-This creates the cool moving colors in the background. It uses **Three.js** and **GLSL** (Graphics Library Shader Language).
+---
 
-*   **What is a Shader?** It's a tiny program that runs on your Graphics Card (GPU), not your CPU.
-*   **How it works:**
-    *   It calculates the color of *every single pixel* on the screen 60 times a second.
-    *   It uses math functions like `sin` and `cos` combined with `time` to create smooth, waving patterns that never repeat exactly.
-    *   *Why use it?* It looks "premium" and modern compared to a static image.
+## ⚙️ 3. Backend Deep Dive (`/backend`)
 
-## 5. The Entry Points (How it starts)
-These two files are the "Front Door" of your application.
+The backend is a **Node.js** server running **Express**.
 
-### `src/main.jsx` (The Foundation)
-This is the very first file that runs when the website loads.
-1.  **`createRoot`**: It finds the `<div id="root">` in your HTML file and tells React: *"Take control of this element."*
-2.  **`BrowserRouter`**: It wraps your entire app in a "Router". This gives your app the ability to have different pages (URLs) without refreshing the browser.
-3.  **`App`**: It renders the main component.
+### Core Files
+*   **`index.js`**: The server starter.
+    *   Connects to MongoDB (`connectDB()`).
+    *   Sets up CORS (so Frontend can talk to Backend).
+    *   Listens on Port 5000.
 
-### `src/App.jsx` (The Traffic Controller)
-This file decides **which page to show** based on the URL.
-*   **`<Routes>`**: This acts like a switch.
-*   **Route `/`**: Shows the `<Landing />` page (The nice intro screen).
-*   **Route `/build`**: Shows the `<Builder />` page (The PC picking tool).
+### The Logic (`controllers/buildController.js`)
+This is where the magic happens (currently).
+1.  **Receive:** Gets `{ budget: 100000, useCase: "Gaming" }` from Frontend.
+2.  **Fetch:** Downloads ALL parts from MongoDB.
+3.  **Filter:** Removes incompatible parts (e.g., Don't put an Intel CPU in an AMD Motherboard).
+4.  **Allocate:** Splits budget (e.g., 40% for GPU if "Gaming").
+5.  **Select:** Picks the best part that fits in the allocated budget slice.
+6.  **Return:** Sends the final JSON list back to the Frontend.
 
-*Think of `main.jsx` as turning on the car, and `App.jsx` as the GPS telling it where to go.*
+### The Database Model (`models/Component.js`)
+Defines the "Shape" of our data using **Mongoose Schema**.
+*   `part`: String (e.g., "gpu")
+*   `price`: Number (e.g., 30000)
+*   `performance_score`: Number (for future AI)
+
+---
+
+## 🧠 4. AI Layer (Coming Soon)
+We are moving the "Logic" from Node.js to **Python**.
+*   **Why?** Node.js is good at "serving", but Python is better at "math".
+*   **Plan:** We will use the **Knapsack Algorithm** to mathematically prove which combination of parts gives the highest total performance score for the price.
+
+---
+
+## 🔄 5. Data Flow Example
+
+1.  **User** slides budget to ₹1.5 Lakh and clicks "Build".
+2.  **Frontend** sends `POST` request to Backend.
+3.  **Backend** asks MongoDB for parts.
+4.  **Backend** runs the compatibility logic.
+5.  **Backend** sends JSON response: `{ cpu: "Ryzen 7", gpu: "RTX 4070"... }`.
+6.  **Frontend** receives JSON and renders the `BuildResult` card with animation.
+
+---
+*Created for the RIGSENSE Project 2026*

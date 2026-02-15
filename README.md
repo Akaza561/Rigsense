@@ -1,72 +1,62 @@
-# RIGSENSE - PC Builder (College Mini-Project)
+# RIGSENSE - AI-Powered PC Builder
 
-**RIGSENSE** is an AI-Powered PC Configuration Assistant designed to help users build computers based on their specific budget and use cases (Gaming, Programming, Video Editing).
+**RIGSENSE** is an intelligent PC Configuration Assistant that uses **Weighted Scoring AI** (Heuristic Optimization) to build the perfect computer for your specific budget and use case.
 
-This project demonstrates the use of **Modern Web Technologies** to solve a real-world problem: the complexity of choosing compatible PC parts.
-
-## 💻 Tech Stack (What we used)
-*   **Frontend:** React (Vite)
-*   **Language:** JavaScript (ES6+)
-*   **Styling:** Styled Components & Vanilla CSS
-*   **Graphics:** Three.js (for the animated background)
-*   **Animation:** Framer Motion
-*   **Logic:** Custom JavaScript Algorithm for part compatibility and budget optimization.
+## 🧠 The Architecture (How it works)
+This is a **Full-Stack Application** with a Microservice Architecture:
+*   **Frontend (React + Vite):** The beautiful Glassmorphism UI where users interact.
+*   **Backend (Node.js + Express):** The API Gateway that manages requests and data.
+*   **Database (MongoDB Atlas):** Stores 700+ PC components with live specs.
+*   **AI Engine (Python):** (Coming Soon) A smart microservice that solves the "Knapsack Problem" to mathematically optimize value.
 
 ---
 
-## 🚀 How to Run This Project (Step-by-Step)
+## 📁 Project Structure
+The project is split into two distinct folders:
 
-If you are new to this, don't worry! Just follow these exact steps.
+*   **📂 `frontend/`**: Contains the React Application.
+    *   `src/pages/Builder.jsx`: Main UI.
+    *   `src/components/`: Reusable UI elements.
+*   **📂 `backend/`**: Contains the Server & Logic.
+    *   `server.js`: Main Entry point.
+    *   `models/`: Database Schemas.
+    *   `scripts/`: Data Seeding tools.
 
-### Step 1: Install Node.js
-We need a tool called **Node.js** to run the website code.
-1.  Go to [nodejs.org](https://nodejs.org/).
-2.  Download the **LTS Version** (Recommended for Most Users).
-3.  Install it like any normal program.
+---
 
-### Step 2: Download the Code
-1.  Click the Green **Code** button on GitHub.
-2.  Click **Download ZIP**.
-3.  Unzip the folder and open it.
+## 🚀 How to Run (Step-by-Step)
 
-### Step 3: Open in VS Code
-1.  Right-click the folder and select **Open with Code** (or drag the folder into VS Code).
-2.  In VS Code, open the **Terminal** (Click `Terminal` -> `New Terminal` in the top menu).
+You need to run **Two Terminals** at the same time (one for Frontend, one for Backend).
 
-### Step 4: Install Libraries
-In the terminal, type this command and press Enter:
+### Terminal 1: backend
 ```bash
-npm install
-```
-This single command automatically installs **everything** listed in our project file, including:
-*   **React** (The UI library)
-*   **Three.js** (For 3D graphics)
-*   **Framer Motion** (For smooth animations)
-*   **Styled Components** (For CSS-in-JS)
-*   **Tailwind CSS** (If configured)
-
-*(You don't need to install them one by one. `npm install` does it all!)*
-
-### Step 5: Start the Website!
-Once the installation finishes, type this command:
-```bash
+cd backend
+npm install   # (Only first time)
 npm run dev
 ```
+*(Runs on Port 5000)*
 
-You should see a message like:
-`> Local: http://localhost:5173/`
+### Terminal 2: frontend
+```bash
+cd frontend
+npm install   # (Only first time)
+npm run dev
+```
+*(Runs on Port 5173)*
 
-**Control + Click** that link to open the website in your browser.
+### Environment Setup
+1.  Navigate to `backend/`.
+2.  Copy `.env.example` to a new file named `.env`.
+3.  Add your MongoDB Connection String.
 
 ---
 
-## 🛠 Troubleshooting (If something breaks)
+## 🛠 Tech Stack
+*   **Frontend:** React, Framer Motion, Three.js, Styled Components.
+*   **Backend:** Node.js, Express, MongoDB (Mongoose).
+*   **AI Layer:** Python (Pandas, NumPy).
 
-*   **Error: 'npm' is not recognized:** You didn't install Node.js correctly. Restart your computer and try again.
-*   **Website is blank?** Check the terminal for red error messages.
-*   **Want to stop the server?** Click in the terminal and press `Ctrl + C`.
-
-## 📁 Project Structure (Where things are)
-*   **src/pages/Builder.jsx**: The main page where the PC building happens.
-*   **src/utils/builderLogic.js**: The "Brain" that picks the parts.
-*   **public/data/components.csv**: The list of all PC parts (prices, specs).
+## 🔮 Future Roadmap
+*   [ ] Python AI Integration (Weighted Scoring).
+*   [ ] User Authentication (Save Builds).
+*   [ ] Multi-Build Generation (Performance vs Value options).
