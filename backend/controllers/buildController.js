@@ -70,20 +70,13 @@ const generateBuild = async (req, res) => {
                     return res.status(500).json({ error: result.message });
                 }
 
-                console.log("[AI RESPONSE] Build Generated Successfully.");
+                console.log("[AI RESPONSE] Builds Generated Successfully.");
 
                 // Transform Python Response to Frontend Schema
-                // Python: { build: { cpu: {...}, gpu: {...} }, totalPrice: 12345, ... }
-                // Frontend Expects: { totalPrice: 12345, parts: [ { category: 'CPU', ... }, ... ] }
+                // Python: { options: { strict_budget: {...}, ... }, reasoning: "..." }
+                // Frontend Expects: { builds: [ { type: 'Strict Budget', parts: [...] }, ... ], reasoning: "..." }
 
-                const formattedBuild = {
-                    totalPrice: result.totalPrice || 0,
-                    ai_score: result.ai_score || 0,
-                    reasoning: result.reasoning || '',
-                    parts: []
-                };
-
-                // Convert Object to Array with Categories
+                const formattedBuilds = [];
                 const categoryMap = {
                     cpu: 'CPU',
                     gpu: 'GPU',
@@ -94,20 +87,44 @@ const generateBuild = async (req, res) => {
                     case: 'Case'
                 };
 
-                for (const [key, partData] of Object.entries(result.build)) {
-                    if (partData && partData.name) {
-                        formattedBuild.parts.push({
-                            category: categoryMap[key] || key.toUpperCase(),
-                            ...partData
-                        });
+                const strategyNames = {
+                    'value': 'Value',
+                    'performance': 'Performance',
+                    'future_proof': 'Future Proof'
+                };
+
+                // Iterate over each strategy in the response
+                for (const [strategyKey, buildData] of Object.entries(result.options)) {
+
+                    const currentBuild = {
+                        type: strategyNames[strategyKey] || strategyKey,
+                        totalPrice: buildData.totalPrice || 0,
+                        ai_score: buildData.ai_score || 0,
+                        parts: []
+                    };
+
+                    // Convert parts object to array
+                    for (const [key, partData] of Object.entries(buildData.parts)) {
+                        if (partData && partData.name) {
+                            currentBuild.parts.push({
+                                category: categoryMap[key] || key.toUpperCase(),
+                                ...partData
+                            });
+                        }
                     }
+
+                    // Sort Parts
+                    const sortOrder = ['CPU', 'Motherboard', 'RAM', 'GPU', 'Storage', 'PSU', 'Case'];
+                    currentBuild.parts.sort((a, b) => sortOrder.indexOf(a.category) - sortOrder.indexOf(b.category));
+
+                    formattedBuilds.push(currentBuild);
                 }
 
-                // Sort Parts for nicer display order
-                const sortOrder = ['CPU', 'Motherboard', 'RAM', 'GPU', 'Storage', 'PSU', 'Case'];
-                formattedBuild.parts.sort((a, b) => sortOrder.indexOf(a.category) - sortOrder.indexOf(b.category));
+                res.status(200).json({
+                    builds: formattedBuilds,
+                    reasoning: result.reasoning
+                });
 
-                res.status(200).json(formattedBuild);
             } catch (e) {
                 console.error("Failed to parse Python response:", dataString);
                 res.status(500).json({ error: "Invalid AI Response" });

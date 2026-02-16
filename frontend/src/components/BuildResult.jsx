@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
+import Button from '../Button';
 
 const ResultContainer = styled(motion.div)`
   background: rgba(255, 255, 255, 0.05);
@@ -26,7 +27,7 @@ const Header = styled.div`
 
 const TotalPrice = styled.h2`
   font-size: 2rem;
-  color: #00ff88;
+  color: #00e5ff;
   font-weight: 700;
   margin: 0;
 `;
@@ -70,25 +71,7 @@ const PartName = styled.span`
 const PartPrice = styled.span`
   font-size: 1.1rem;
   font-weight: 600;
-  color: #00ff88;
-`;
-
-const Button = styled(motion.button)`
-  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
-  border: none;
-  border-radius: 12px;
-  padding: 1rem 2rem;
-  color: #000;
-  font-weight: 700;
-  font-size: 1rem;
-  cursor: pointer;
-  margin-top: 2rem;
-  width: 100%;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
-  }
+  color: #00e5ff;
 `;
 
 const SpecTag = styled.span`
@@ -138,13 +121,12 @@ function BuildResult({ build, useCase, onReset }) {
         ))}
       </PartList>
 
-      <Button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={onReset}
-      >
-        Build Another Rig
-      </Button>
+      <div style={{ marginTop: '2rem', width: '100%', display: 'flex', justifyContent: 'center' }}>
+        <Button
+          text="Build Another Rig"
+          onClick={onReset}
+        />
+      </div>
     </ResultContainer>
   );
 }

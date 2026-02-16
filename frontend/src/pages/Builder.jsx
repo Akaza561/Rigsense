@@ -146,17 +146,69 @@ function BuilderForm({ onBuild, isBuilding }) {
     )
 }
 
+const TabsContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 800px;
+  flex-wrap: wrap;
+`
+
+const TabButton = styled(m.button)`
+  background: ${props => props.active ? 'rgba(60, 32, 216, 0.3)' : 'rgba(255, 255, 255, 0.05)'};
+  border: 1px solid ${props => props.active ? '#3c20d8' : 'rgba(255, 255, 255, 0.1)'};
+  color: ${props => props.active ? '#fff' : '#aaa'};
+  backdrop-filter: blur(10px);
+  padding: 0.8rem 1.5rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &:hover {
+    background: ${props => props.active ? 'rgba(60, 32, 216, 0.5)' : 'rgba(60, 32, 216, 0.15)'};
+    color: #fff;
+    border-color: #3c20d8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(60, 32, 216, 0.3);
+  }
+`
+
+const ReasoningText = styled.p`
+    color: #aaa;
+    max-width: 600px;
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
+    font-style: italic;
+`
+
 function Builder() {
     const [buildResult, setBuildResult] = useState(null)
     const [isBuilding, setIsBuilding] = useState(false)
     const [selectedUseCase, setSelectedUseCase] = useState('')
+    const [selectedTab, setSelectedTab] = useState(0)
 
     const handleBuild = async (budget, useCase) => {
         setIsBuilding(true)
         setSelectedUseCase(useCase)
+        setBuildResult(null)
         try {
             const result = await generateBuild(budget, useCase)
-            setBuildResult(result)
+            // Handle new multi-build response
+            if (result.builds && Array.isArray(result.builds)) {
+                setBuildResult(result)
+                // Default to "Max Performance" (Index 1) if available, else 0
+                setSelectedTab(result.builds.length > 1 ? 1 : 0)
+            } else {
+                // Fallback for old single object response
+                setBuildResult(result)
+            }
         } catch (error) {
             console.error(error)
             alert('Build failed: ' + error.message)
@@ -164,6 +216,8 @@ function Builder() {
             setIsBuilding(false)
         }
     }
+
+    const currentBuild = buildResult?.builds ? buildResult.builds[selectedTab] : buildResult
 
     return (
         <LazyMotion features={domAnimation}>
@@ -179,16 +233,52 @@ function Builder() {
                     >
                         Configure Your Build
                     </Title>
+
                     {isBuilding ? (
                         <Loading />
                     ) : !buildResult ? (
                         <BuilderForm onBuild={handleBuild} isBuilding={isBuilding} />
                     ) : (
-                        <BuildResult
-                            build={buildResult}
-                            useCase={selectedUseCase}
-                            onReset={() => setBuildResult(null)}
-                        />
+                        <>
+                            {buildResult.reasoning && (
+                                <ReasoningText>{buildResult.reasoning}</ReasoningText>
+                            )}
+
+                            {buildResult.builds && (
+                                <TabsContainer>
+                                    {buildResult.builds.map((b, index) => (
+                                        <TabButton
+                                            key={index}
+                                            active={selectedTab === index}
+                                            onClick={() => setSelectedTab(index)}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            {b.type}
+                                            <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                                                ₹{b.totalPrice.toLocaleString()}
+                                            </div>
+                                        </TabButton>
+                                    ))}
+                                </TabsContainer>
+                            )}
+
+                            <m.div
+                                key={selectedTab} // Force re-render on tab switch for animation
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.3 }}
+                                style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+                            >
+                                <BuildResult
+                                    build={currentBuild}
+                                    useCase={selectedUseCase}
+                                    onReset={() => {
+                                        setBuildResult(null)
+                                        setSelectedTab(0)
+                                    }}
+                                />
+                            </m.div>
+                        </>
                     )}
                 </Container>
             </div>
