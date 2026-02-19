@@ -1,5 +1,6 @@
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useContext, useState } from 'react'
 import { m, LazyMotion, domAnimation } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import '../index.css'
 import Button from '../Button'
 import SimpleButton from '../SimpleButton'
@@ -7,10 +8,25 @@ import Radio from '../Radio'
 import Card from '../Card'
 import ProductCard from '../ProductCard'
 import AuthButton from '../AuthButton'
+import AuthContext from '../context/AuthContext'
+import UsernameModal from '../components/UsernameModal'
 
 const AnoAI = lazy(() => import('../components/ui/animated-shader-background'))
 
 function Landing() {
+    const navigate = useNavigate()
+    const { user, logout } = useContext(AuthContext)
+
+    const [showModal, setShowModal] = useState(true)
+
+    const handleAuthClick = () => {
+        if (user) {
+            logout()
+        } else {
+            navigate('/login')
+        }
+    }
+
     return (
         <LazyMotion features={domAnimation}>
             <div style={{ width: '100%', minHeight: '100vh' }}>
@@ -23,16 +39,20 @@ function Landing() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 0.2 }}
                         style={{ position: 'absolute', top: '20px', left: '20px' }}>
-                        <SimpleButton />
+                        <SimpleButton username={user?.username} />
                     </m.div>
                     <m.div
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 0.2 }}
                         style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <AuthButton text="Log In / Register" />
+                        <AuthButton text={user ? "Log Out" : "Log In / Register"} onClick={handleAuthClick} />
                         <Radio />
                     </m.div>
+
+                    {user && !user.hasSetUsername && showModal && (
+                        <UsernameModal onClose={() => setShowModal(false)} />
+                    )}
                     <m.h1
                         initial={{ opacity: 0, x: -50 }}
                         animate={{ opacity: 1, x: 0 }}

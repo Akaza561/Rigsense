@@ -1,9 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const AuthButton = ({ text = "Log In" }) => {
+const AuthButton = ({ text = "Log In", onClick }) => {
   return (
-    <StyledWrapper>
+    <StyledWrapper onClick={onClick}>
       <div aria-label={`User ${text} Button`} tabIndex={0} role="button" className="user-profile">
         <div className="user-profile-inner">
           <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">

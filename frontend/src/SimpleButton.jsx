@@ -1,13 +1,13 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const SimpleButton = () => {
-    return (
-        <StyledButton>
-            Hello
-            <span className="subtitle"> ─ AKAZA</span>
-        </StyledButton>
-    );
+const SimpleButton = ({ username }) => {
+  return (
+    <StyledButton>
+      Hello
+      <span className="subtitle"> ─ {username || 'AKAZA'}</span>
+    </StyledButton>
+  );
 }
 
 const StyledButton = styled.button`

@@ -25,6 +25,8 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/build', buildRoutes);
+app.use('/api/users', require('./routes/authRoutes'));
+app.use('/api/components', require('./routes/componentRoutes'));
 
 // Start Server
 app.listen(PORT, () => {

@@ -1,45 +1,97 @@
-import { motion } from 'framer-motion';
+import React from 'react';
 import styled from 'styled-components';
 
-const LoaderContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 400px;
-  width: 100%;
-`;
-
-const Spinner = styled(motion.div)`
-  width: 60px;
-  height: 60px;
-  border: 4px solid rgba(255, 255, 255, 0.1);
-  border-top: 4px solid #3c20d8;
-  border-radius: 50%;
-`;
-
-const Text = styled(motion.p)`
-  margin-top: 1.5rem;
-  font-size: 1.2rem;
-  color: #ccc;
-  font-family: 'Inter', sans-serif;
-`;
-
 const Loading = () => {
-    return (
-        <LoaderContainer>
-            <Spinner
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            />
-            <Text
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-            >
-                Analyzing Compatibility...
-            </Text>
-        </LoaderContainer>
-    );
-};
+  return (
+    <StyledWrapper>
+      <div className="loader">
+        <div className="load-inner load-one" />
+        <div className="load-inner load-two" />
+        <div className="load-inner load-three" />
+        <span className="text">Building...</span>
+      </div>
+    </StyledWrapper>
+  );
+}
+
+const StyledWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 400px; /* Reduced margin to fit container */
+
+  .loader {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    height: 100px;
+    margin: 0; /* Centering handled by flex parent */
+    perspective: 780px;
+  }
+
+  .text {
+    font-size: 20px;
+    font-weight: 700;
+    color: #cecece;
+    z-index: 10;
+  }
+
+  .load-inner {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    border-radius: 50%;
+  }
+
+  .load-inner.load-one {
+    left: 0%;
+    top: 0%;
+    border-bottom: 3px solid #5c5edc;
+    animation: rotate1 1.15s linear infinite;
+  }
+
+  .load-inner.load-two {
+    right: 0%;
+    top: 0%;
+    border-right: 3px solid #9147ff;
+    animation: rotate2 1.15s 0.1s linear infinite;
+  }
+
+  .load-inner.load-three {
+    right: 0%;
+    bottom: 0%;
+    border-top: 3px solid #3b82f6;
+    animation: rotate3 1.15s 0.15s linear infinite;
+  }
+
+  @keyframes rotate1 {
+    0% {
+      transform: rotateX(45deg) rotateY(-45deg) rotateZ(0deg);
+    }
+    100% {
+      transform: rotateX(45deg) rotateY(-45deg) rotateZ(360deg);
+    }
+  }
+  @keyframes rotate2 {
+    0% {
+      transform: rotateX(45deg) rotateY(45deg) rotateZ(0deg);
+    }
+    100% {
+      transform: rotateX(45deg) rotateY(45deg) rotateZ(360deg);
+    }
+  }
+  @keyframes rotate3 {
+    0% {
+      transform: rotateX(-60deg) rotateY(0deg) rotateZ(0deg);
+    }
+    100% {
+      transform: rotateX(-60deg) rotateY(0deg) rotateZ(360deg);
+    }
+  }
+`;
 
 export default Loading;

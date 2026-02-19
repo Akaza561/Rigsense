@@ -26,6 +26,7 @@ yarn-error.log*
 # Backend
 backend/node_modules
 backend/.env
+backend/config/serviceAccountKey.json
 
 # Frontend
 frontend/node_modules

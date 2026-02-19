@@ -6,33 +6,47 @@ This document explains the **internal architecture** of RIGSENSE. Use this to un
 
 ## 🏗️ 1. Architecture Overview (The "Big Picture")
 
-RIGSENSE follows a **Client-Server Architecture** (Monorepo):
+RIGSENSE follows a **Client-Server Architecture** (Monorepo) augmented by a **Python AI Microservice**:
 
 1.  **Frontend (`/frontend`)**: A React Single Page Application (SPA). It handles the UI, animations, and user intent.
-2.  **Backend (`/backend`)**: A REST API (Express.js). It processes data, connects to MongoDB, and executes logic.
-3.  **Database (MongoDB Atlas)**: Stores component data (Processors, GPUs, RAM, etc.).
+2.  **Backend (`/backend`)**: A REST API (Express.js). It processes data, connects to MongoDB, handles Auth, and orchestrates the AI logic.
+3.  **AI Engine (`/backend/ai`)**: A Python script (`optimizer.py`) running locally via spawn. It performs complex mathematical optimization (Knapsack Problem).
+4.  **Database (MongoDB Atlas)**: Stores component data (Processors, GPUs, RAM, etc.) and User Profiles.
+5.  **Auth (Firebase + JWT)**: Handles identity verification and session management.
 
 ---
 
 ## 🎨 2. Frontend Deep Dive (`/frontend`)
 
-The frontend is built with **React + Vite**.
+The frontend is built with **React + Vite**. It features a Glassmorphism design system.
 
 ### Core Files
-*   **`src/main.jsx`**: The entry point. It mounts the React App to the DOM.
-*   **`src/App.jsx`**: The main router. It decides which page to show (`Home` vs `Builder`).
+*   **`src/main.jsx`**: The entry point.
+*   **`src/App.jsx`**: The router (`/`, `/build`, `/login`, `/builder` redirect).
+*   **`src/context/AuthContext.jsx`**: Manages user session state using Firebase and Backend verification.
 
-### Key Components
+### Key Pages & Components
 #### `src/pages/Builder.jsx`
 This is the "Brain" of the frontend.
-*   **State Management (`useState`):** Tracks `budget`, `useCase`, and `isBuilding`.
-*   **API Calls:** Uses `fetch()` to send data to `http://localhost:5000/api/build`.
-*   **Visuals:** Uses `framer-motion` for the smooth fade-in effects.
+*   **Modes:** Toggles between "AI Builder" (Automatic) and "Manual Builder" (Custom).
+*   **State Management:** Tracks `budget`, `useCase`, `buildResult`, and `manualSelections`.
+*   **Integration:** Calls `generateBuild()` (AI) or local logic for manual selection.
+
+#### `src/components/ManualBuilder.jsx`
+*   **Purpose:** Allows experienced users to hand-pick parts.
+*   **Features:**
+    *   Fetches all compatible parts from backend.
+    *   Tracks "Bottleneck Percentage" (CPU vs GPU balance).
+    *   Calculates total wattage and verifies PSU.
+    *   Syncs selections back to `Builder.jsx` state.
+
+#### `src/components/BuildResult.jsx`
+*   **Purpose:** Displays the generated PC build.
+*   **Interactivity:** Allows users to Edit specific parts, Save the build to their profile, or Reset.
 
 #### `src/components/ui/animated-shader-background.jsx`
-*   **Technology:** Uses **Three.js** and **GLSL Shaders**.
-*   **How it works:** It creates a mathematical function (Fractal Brownian Motion) that runs on the GPU, creating the "Purple Smoke" effect.
-*   **Optimization:** It uses a low-resolution render target upscaled to fit the screen to save battery.
+*   **Technology:** **Three.js** and **GLSL Shaders**.
+*   **Effect:** Creates the signature "Purple Smoke" fractal background.
 
 ---
 
@@ -41,43 +55,55 @@ This is the "Brain" of the frontend.
 The backend is a **Node.js** server running **Express**.
 
 ### Core Files
-*   **`index.js`**: The server starter.
-    *   Connects to MongoDB (`connectDB()`).
-    *   Sets up CORS (so Frontend can talk to Backend).
-    *   Listens on Port 5000.
+*   **`index.js`**: Server entry point. Connects DB, Middleware, Routes.
+*   **`controllers/buildController.js`**:
+    *   **The Orchestrator:** Receives build request.
+    *   **AI Hand-off:** Spawns a Python process to run `optimizer.py`.
+    *   **Response:** Sends the optimized build list back to Frontend.
+*   **`controllers/authController.js`**:
+    *   Handles Google Login (verifies Firebase Token).
+    *   Manages User Profile (Username, Avatar).
+    *   Saves Builds to MongoDB.
 
-### The Logic (`controllers/buildController.js`)
-This is where the magic happens (currently).
-1.  **Receive:** Gets `{ budget: 100000, useCase: "Gaming" }` from Frontend.
-2.  **Fetch:** Downloads ALL parts from MongoDB.
-3.  **Filter:** Removes incompatible parts (e.g., Don't put an Intel CPU in an AMD Motherboard).
-4.  **Allocate:** Splits budget (e.g., 40% for GPU if "Gaming").
-5.  **Select:** Picks the best part that fits in the allocated budget slice.
-6.  **Return:** Sends the final JSON list back to the Frontend.
-
-### The Database Model (`models/Component.js`)
-Defines the "Shape" of our data using **Mongoose Schema**.
-*   `part`: String (e.g., "gpu")
-*   `price`: Number (e.g., 30000)
-*   `performance_score`: Number (for future AI)
-
----
-
-## 🧠 4. AI Layer (Coming Soon)
-We are moving the "Logic" from Node.js to **Python**.
-*   **Why?** Node.js is good at "serving", but Python is better at "math".
-*   **Plan:** We will use the **Knapsack Algorithm** to mathematically prove which combination of parts gives the highest total performance score for the price.
+### The AI Logic (`ai/optimizer.py`)
+This script implements the **Knapsack Algorithm** variant.
+1.  **Input:** Budget, Use Case (Gaming/Workstation).
+2.  **Data:** Loads all parts from CSV/DB dump.
+3.  **Process:**
+    *   Assigns weights to components based on Use Case (e.g., Gaming = High GPU weight).
+    *   Filters incompatible parts (Socket matching, DDR type).
+    *   Iteratively selects the best combination that fits under the budget ceiling.
+4.  **Output:** Returns JSON of the selected build.
 
 ---
 
-## 🔄 5. Data Flow Example
+## 🔐 4. Authentication System
 
-1.  **User** slides budget to ₹1.5 Lakh and clicks "Build".
-2.  **Frontend** sends `POST` request to Backend.
-3.  **Backend** asks MongoDB for parts.
-4.  **Backend** runs the compatibility logic.
-5.  **Backend** sends JSON response: `{ cpu: "Ryzen 7", gpu: "RTX 4070"... }`.
-6.  **Frontend** receives JSON and renders the `BuildResult` card with animation.
+We use a **Hybrid Auth** approach:
+1.  **Firebase Auth:** Handles the actual Sign-In (Google Popup). It provides a secure ID Token.
+2.  **Backend Verification:**
+    *   Frontend sends Firebase Token to `/api/users/google-login`.
+    *   Backend verifies token using `firebase-admin`.
+    *   Backend checks/creates the User in MongoDB.
+    *   Backend returns user profile (and optionally a JWT for session).
+
+---
+
+## 💾 5. Database Schema (`models/`)
+
+*   **`Component.js`**: `part` (type), `name`, `price`, `specs` (watage, socket, etc.), `performance_score`.
+*   **`User.js`**: `username`, `email`, `firebaseUid`, `savedBuilds` (Array of build objects).
+
+---
+
+## 🔄 6. Data Flow Example (AI Build)
+
+1.  **User** sets Budget ₹1.5L & Case "Gaming".
+2.  **Frontend** POSTs to `/api/build`.
+3.  **Backend** spawns `python ai/optimizer.py 150000 Gaming`.
+4.  **Python Script** loads data, runs optimization, prints JSON result to stdout.
+5.  **Backend** captures JSON, parses it, and sends response.
+6.  **Frontend** renders 3 tabs: "Performance", "Balanced", "Reliability".
 
 ---
 *Created for the RIGSENSE Project 2026*

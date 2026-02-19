@@ -1,11 +1,16 @@
-import { useState, lazy, Suspense } from 'react'
+import { useState, useEffect, lazy, Suspense, useContext } from 'react'
 import { m, LazyMotion, domAnimation } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import Button from '../Button'
+import Switch from '../components/Switch'
 import BuildResult from '../components/BuildResult'
 import Loading from '../components/Loading'
+import ManualBuilder from '../components/ManualBuilder'
+import AuthContext from '../context/AuthContext'
 
 import { generateBuild } from '../utils/builderLogic'
+import { generateManualBuildResult } from '../utils/manualBuilderUtils'
 
 const AnoAI = lazy(() => import('../components/ui/animated-shader-background'))
 
@@ -90,8 +95,6 @@ const UseCaseCard = styled.div`
     border-color: #3c20d8;
   }
 `
-
-
 
 function BuilderForm({ onBuild, isBuilding }) {
     const [budget, setBudget] = useState(50000)
@@ -189,10 +192,62 @@ const ReasoningText = styled.p`
 `
 
 function Builder() {
+    // AI Builder State
     const [buildResult, setBuildResult] = useState(null)
     const [isBuilding, setIsBuilding] = useState(false)
     const [selectedUseCase, setSelectedUseCase] = useState('')
     const [selectedTab, setSelectedTab] = useState(0)
+    const [isManualMode, setIsManualMode] = useState(false)
+    const navigate = useNavigate()
+
+    // Manual Builder State (Lifted)
+    const [components, setComponents] = useState({});
+    const [manualSelections, setManualSelections] = useState({
+        cpu: null,
+        gpu: null,
+        motherboard: null,
+        ram: null,
+        storage: null,
+        psu: null,
+        case: null,
+    });
+    const [targetResolution, setTargetResolution] = useState('1440p');
+    const [isComponentsLoading, setIsComponentsLoading] = useState(true);
+
+    // Fetch Components (Moved from ManualBuilder)
+    useEffect(() => {
+        const fetchComponents = async () => {
+            try {
+                const res = await fetch('http://localhost:5000/api/components');
+                const data = await res.json();
+                const mappedData = {
+                    ...data,
+                    cpu: data.processor || [],
+                    storage: [...(data.ssd || []), ...(data.hdd || [])],
+                };
+                setComponents(mappedData);
+            } catch (error) {
+                console.error('Failed to fetch components', error);
+            } finally {
+                setIsComponentsLoading(false);
+            }
+        };
+        fetchComponents();
+
+        // Check for pending build
+        const pendingBuild = localStorage.getItem('pendingBuild');
+        if (pendingBuild) {
+            const { builds, useCase, tab } = JSON.parse(pendingBuild);
+            setBuildResult(builds);
+            setSelectedUseCase(useCase);
+            setSelectedTab(tab);
+            setIsBuilding(false);
+            // Don't clear it yet, wait for the user to actually save it? 
+            // Better to clear it so it doesn't persist on refresh if they navigate away?
+            // Actually, if we just set state, it's fine. We should clear it to avoid it popping up unexpectedly later.
+            localStorage.removeItem('pendingBuild');
+        }
+    }, []);
 
     const handleBuild = async (budget, useCase) => {
         setIsBuilding(true)
@@ -200,13 +255,10 @@ function Builder() {
         setBuildResult(null)
         try {
             const result = await generateBuild(budget, useCase)
-            // Handle new multi-build response
             if (result.builds && Array.isArray(result.builds)) {
                 setBuildResult(result)
-                // Default to "Max Performance" (Index 1) if available, else 0
                 setSelectedTab(result.builds.length > 1 ? 1 : 0)
             } else {
-                // Fallback for old single object response
                 setBuildResult(result)
             }
         } catch (error) {
@@ -217,7 +269,126 @@ function Builder() {
         }
     }
 
+    const handleManualBuild = (result) => {
+        setBuildResult(result)
+        setSelectedTab(0)
+    }
+
+    const syncAiBuildToManual = (currentBuild) => {
+        if (!currentBuild || !currentBuild.parts) return;
+
+        const newSelections = {
+            cpu: null,
+            gpu: null,
+            motherboard: null,
+            ram: null,
+            storage: null,
+            psu: null,
+            case: null,
+        };
+
+        currentBuild.parts.forEach(part => {
+            if (!part || !part.name) return;
+            const typeKey = part.category.toLowerCase();
+
+            // Try to find the full component object in our fetched components
+            // 1. By ID (if AI preserved it)
+            // 2. By Name (fallback)
+            let fullComponent = null;
+            const potentialList = components[typeKey];
+
+            if (potentialList) {
+                if (part._id) {
+                    fullComponent = potentialList.find(c => c._id === part._id);
+                }
+                if (!fullComponent) {
+                    fullComponent = potentialList.find(c => c.name === part.name);
+                }
+            }
+
+            // If found, set it; otherwise use the part data itself (might be incomplete but better than null)
+            newSelections[typeKey] = fullComponent || part;
+        });
+
+        setManualSelections(newSelections);
+        return newSelections;
+    };
+
+    const handleEditPart = (partType) => {
+        const currentBuild = buildResult?.builds ? buildResult.builds[selectedTab] : buildResult;
+
+        // Always sync if we are editing an AI build (or if manual state is empty)
+        // If it's already a 'Manual Build', we assume manualSelections is up to date
+        if (currentBuild && (currentBuild.type !== 'Manual Build' || !manualSelections.cpu)) {
+            syncAiBuildToManual(currentBuild);
+        }
+
+        setBuildResult(null); // Return to builder view
+        setIsManualMode(true);
+    };
+
+    const handleDeletePart = (partType) => {
+        const typeKey = partType.toLowerCase();
+
+        // Ensure we have the current state synced
+        let currentSelections = manualSelections;
+        const currentBuild = buildResult?.builds ? buildResult.builds[selectedTab] : buildResult;
+
+        // Force sync if deleting from an AI build
+        if (currentBuild && (currentBuild.type !== 'Manual Build' || !manualSelections.cpu)) {
+            currentSelections = syncAiBuildToManual(currentBuild);
+        }
+
+        const newSelections = { ...currentSelections, [typeKey]: null };
+        setManualSelections(newSelections);
+
+        // Regenerate the manual build result immediately
+        const newBuild = generateManualBuildResult(newSelections, components, targetResolution);
+
+        setBuildResult(prev => ({
+            ...prev,
+            builds: [newBuild],
+            reasoning: newBuild.issues.length > 0 ? "Compatibility Issues Found" : "Custom Configuration"
+        }));
+        setSelectedTab(0); // CRITICAL: Reset tab to 0 as we now have only 1 build
+    };
+
     const currentBuild = buildResult?.builds ? buildResult.builds[selectedTab] : buildResult
+
+    const { user } = useContext(AuthContext);
+
+    const handleSaveBuild = async () => {
+        if (!user) {
+            if (window.confirm("You need to be logged in to save your build. Would you like to log in now?")) {
+                localStorage.setItem('pendingBuild', JSON.stringify({
+                    builds: buildResult, // Save the full result object
+                    useCase: selectedUseCase,
+                    tab: selectedTab
+                }));
+                navigate('/login');
+            }
+            return;
+        }
+
+        try {
+            const res = await fetch('http://localhost:5000/api/users/save-build', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ _id: user._id, build: currentBuild }),
+            });
+
+            if (res.ok) {
+                alert('Build saved to your profile!');
+            } else {
+                alert('Failed to save build.');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error saving build.');
+        }
+    };
 
     return (
         <LazyMotion features={domAnimation}>
@@ -234,10 +405,27 @@ function Builder() {
                         Configure Your Build
                     </Title>
 
+                    {/* Only show toggle if not building and no result yet */}
+                    {!isBuilding && !buildResult && (
+                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+                            <Switch isManual={isManualMode} onToggle={(val) => setIsManualMode(val)} />
+                        </div>
+                    )}
+
                     {isBuilding ? (
-                        <Loading />
+                        <Loading useCase={selectedUseCase || "High Performance"} />
                     ) : !buildResult ? (
-                        <BuilderForm onBuild={handleBuild} isBuilding={isBuilding} />
+                        isManualMode ? (
+                            <ManualBuilder
+                                onBuild={handleManualBuild}
+                                selections={manualSelections}
+                                setSelections={setManualSelections}
+                                targetResolution={targetResolution}
+                                setTargetResolution={setTargetResolution}
+                            />
+                        ) : (
+                            <BuilderForm onBuild={handleBuild} isBuilding={isBuilding} />
+                        )
                     ) : (
                         <>
                             {buildResult.reasoning && (
@@ -263,7 +451,7 @@ function Builder() {
                             )}
 
                             <m.div
-                                key={selectedTab} // Force re-render on tab switch for animation
+                                key={selectedTab}
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ duration: 0.3 }}
@@ -276,6 +464,10 @@ function Builder() {
                                         setBuildResult(null)
                                         setSelectedTab(0)
                                     }}
+                                    onEdit={handleEditPart}
+                                    onDelete={handleDeletePart}
+                                    onSelect={handleEditPart} // Select logic is same as edit (go to builder)
+                                    onSave={handleSaveBuild}
                                 />
                             </m.div>
                         </>
