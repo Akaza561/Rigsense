@@ -127,10 +127,81 @@ export const checkBottlenecks = (selections, components, targetResolution = '144
     return bottlenecks;
 };
 
+/**
+ * For each selected part, find a better alternative in the same category.
+ * "Better" = higher performance_score at a reasonable price bump (< 40% more).
+ */
+const generatePartSuggestions = (selections, components) => {
+    const suggestions = {};
+    const partTypes = ['cpu', 'gpu', 'motherboard', 'ram', 'storage', 'psu', 'case'];
+
+    partTypes.forEach(type => {
+        const current = selections[type];
+        if (!current) return;
+
+        const pool = components[type];
+        if (!pool || pool.length === 0) return;
+
+        const curScore = current.performance_score || 0;
+        const curPrice = current.price || 0;
+        const maxPrice = curPrice * 1.4; // up to 40% more expensive
+
+        // Find candidates: higher score, within budget, compatible socket for CPU/mobo
+        let candidates = pool.filter(c => {
+            if (c._id === current._id || c.name === current.name) return false;
+            if ((c.performance_score || 0) <= curScore) return false;
+            if (c.price > maxPrice) return false;
+
+            // Socket compatibility for CPU
+            if (type === 'cpu' && selections.motherboard) {
+                if (c.socket && selections.motherboard.socket && c.socket !== selections.motherboard.socket) return false;
+            }
+            // Socket compatibility for mobo
+            if (type === 'motherboard' && selections.cpu) {
+                if (c.socket && selections.cpu.socket && c.socket !== selections.cpu.socket) return false;
+            }
+            // RAM type compatibility
+            if (type === 'ram' && selections.motherboard) {
+                const moboRam = selections.motherboard.ram_type?.toUpperCase();
+                const candidateRam = c.ram_type?.toUpperCase();
+                if (moboRam && candidateRam && !moboRam.includes(candidateRam)) return false;
+            }
+            return true;
+        });
+
+        // Sort by best value (score per rupee)
+        candidates.sort((a, b) => {
+            const valA = (a.performance_score || 0) / (a.price || 1);
+            const valB = (b.performance_score || 0) / (b.price || 1);
+            return valB - valA;
+        });
+
+        if (candidates.length > 0) {
+            const best = candidates[0];
+            const scoreDiff = (best.performance_score || 0) - curScore;
+            const priceDiff = best.price - curPrice;
+
+            let reason = `+${scoreDiff} perf score`;
+            if (priceDiff <= 0) reason += `, ₹${Math.abs(priceDiff).toLocaleString()} cheaper`;
+            else reason += ` for just ₹${priceDiff.toLocaleString()} more`;
+
+            suggestions[type.toUpperCase()] = {
+                name: best.name,
+                price: best.price,
+                performance_score: best.performance_score,
+                reason,
+            };
+        }
+    });
+
+    return suggestions;
+};
+
 export const generateManualBuildResult = (selections, components, targetResolution) => {
     const issues = validateBuild(selections);
     const bottlenecks = checkBottlenecks(selections, components, targetResolution);
     const total = calculateTotal(selections);
+    const upgrades = generatePartSuggestions(selections, components);
 
     // Create parts array including NULLs for missing parts
     const partTypes = ['cpu', 'gpu', 'motherboard', 'ram', 'storage', 'psu', 'case'];
@@ -145,7 +216,8 @@ export const generateManualBuildResult = (selections, components, targetResoluti
             price: part.price,
             performance_score: part.performance_score,
             watt: part.watt,
-            params: part
+            params: part,
+            upgrade: upgrades[type.toUpperCase()] || null,
         };
     });
 
