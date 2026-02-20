@@ -92,13 +92,14 @@ const googleLogin = async (req, res) => {
 };
 
 const updateUserProfile = async (req, res) => {
-    const { _id, username } = req.body;
+    const { _id, username, picture } = req.body;
 
     const user = await User.findById(_id);
 
     if (user) {
         user.username = username || user.username;
         user.hasSetUsername = true;
+        if (picture !== undefined) user.picture = picture;
 
         const updatedUser = await user.save();
 
@@ -111,6 +112,33 @@ const updateUserProfile = async (req, res) => {
             hasSetUsername: updatedUser.hasSetUsername,
             token: generateToken(updatedUser._id)
         });
+    } else {
+        res.status(404).json({ message: 'User not found' });
+    }
+};
+
+// @desc    Get all saved builds for a user
+// @route   GET /api/users/saved-builds/:userId
+// @access  Public
+const getSavedBuilds = async (req, res) => {
+    const user = await User.findById(req.params.userId);
+    if (user) {
+        res.json({ savedBuilds: user.savedBuilds });
+    } else {
+        res.status(404).json({ message: 'User not found' });
+    }
+};
+
+// @desc    Delete a saved build from user profile
+// @route   DELETE /api/users/saved-builds/:userId/:buildIndex
+// @access  Public
+const deleteSavedBuild = async (req, res) => {
+    const user = await User.findById(req.params.userId);
+    if (user) {
+        const index = parseInt(req.params.buildIndex);
+        user.savedBuilds.splice(index, 1);
+        await user.save();
+        res.json({ message: 'Build deleted', savedBuilds: user.savedBuilds });
     } else {
         res.status(404).json({ message: 'User not found' });
     }
@@ -232,4 +260,4 @@ const resetPassword = async (req, res) => {
     });
 };
 
-module.exports = { authUser, registerUser, forgotPassword, resetPassword, googleLogin, updateUserProfile, saveBuild };
+module.exports = { authUser, registerUser, forgotPassword, resetPassword, googleLogin, updateUserProfile, saveBuild, getSavedBuilds, deleteSavedBuild };

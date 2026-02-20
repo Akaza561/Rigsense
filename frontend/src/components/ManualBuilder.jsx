@@ -47,7 +47,7 @@ const Select = styled.select`
   outline: none;
 
   &:focus {
-    border-color: #3c20d8;
+    border-color: #00c2d4;
   }
 
   option {
@@ -61,8 +61,8 @@ const TotalPrice = styled.div`
   font-weight: 700;
   text-align: center;
   margin-top: 1rem;
-  color: #3c20d8;
-  background: linear-gradient(135deg, #291dd1ff, #3c20d8ff);
+  color: #00c2d4;
+  background: linear-gradient(135deg, #0099aaff, #00c2d4ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 `;

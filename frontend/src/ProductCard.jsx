@@ -43,7 +43,7 @@ const StyledWrapper = styled.div`
     overflow: hidden;
     top: 0;
     right: 0;
-    background: linear-gradient(135deg, #291dd1ff, #3c20d8ff);
+    background: linear-gradient(135deg, #0099aaff, #00c2d4ff);
     border-radius: 0 4px 0 32px;
   }
 

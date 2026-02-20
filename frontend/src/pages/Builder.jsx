@@ -28,50 +28,53 @@ const Container = styled.div`
 `
 
 const Title = styled(m.h2)`
-  font-size: 3rem;
+  font-size: 2.2rem;
   font-weight: 700;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   background: linear-gradient(to right, #fff, #aaa);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  letter-spacing: -0.01em;
 `
 
 const FormSection = styled(m.div)`
   width: 100%;
-  max-width: 600px;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 2rem;
+  max-width: 560px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  padding: 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 `
 
 const Label = styled.label`
-  font-size: 1.2rem;
-  font-weight: 500;
-  color: #ccc;
-  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 0.4rem;
   display: block;
 `
 
 const RangeInput = styled.input`
   width: 100%;
-  accent-color: #3c20d8;
+  accent-color: #00c2d4;
   margin-top: 1rem;
 `
 
 const PriceDisplay = styled.span`
-  font-size: 2rem;
+  font-size: 1.7rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #291dd1ff, #3c20d8ff);
+  background: linear-gradient(135deg, #0099aaff, #00c2d4ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: block;
   text-align: center;
-  margin-top: 0.5rem;
+  margin-top: 0.4rem;
 `
 
 const UseCaseGrid = styled.div`
@@ -82,7 +85,7 @@ const UseCaseGrid = styled.div`
 
 const UseCaseCard = styled.div`
   background: ${props => props.selected ? 'rgba(41, 29, 209, 0.3)' : 'rgba(255, 255, 255, 0.05)'};
-  border: 1px solid ${props => props.selected ? '#3c20d8' : 'rgba(255, 255, 255, 0.1)'};
+  border: 1px solid ${props => props.selected ? '#00c2d4' : 'rgba(255, 255, 255, 0.1)'};
   border-radius: 12px;
   padding: 1.5rem;
   cursor: pointer;
@@ -92,7 +95,7 @@ const UseCaseCard = styled.div`
 
   &:hover {
     background: ${props => props.selected ? 'rgba(41, 29, 209, 0.4)' : 'rgba(41, 29, 209, 0.1)'};
-    border-color: #3c20d8;
+    border-color: #00c2d4;
   }
 `
 
@@ -161,7 +164,7 @@ const TabsContainer = styled.div`
 
 const TabButton = styled(m.button)`
   background: ${props => props.active ? 'rgba(60, 32, 216, 0.3)' : 'rgba(255, 255, 255, 0.05)'};
-  border: 1px solid ${props => props.active ? '#3c20d8' : 'rgba(255, 255, 255, 0.1)'};
+  border: 1px solid ${props => props.active ? '#00c2d4' : 'rgba(255, 255, 255, 0.1)'};
   color: ${props => props.active ? '#fff' : '#aaa'};
   backdrop-filter: blur(10px);
   padding: 0.8rem 1.5rem;
@@ -176,7 +179,7 @@ const TabButton = styled(m.button)`
   &:hover {
     background: ${props => props.active ? 'rgba(60, 32, 216, 0.5)' : 'rgba(60, 32, 216, 0.15)'};
     color: #fff;
-    border-color: #3c20d8;
+    border-color: #00c2d4;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(60, 32, 216, 0.3);
   }

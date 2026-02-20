@@ -23,11 +23,9 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  min-height: 100vh;
-  /* background: linear-gradient(to top, #3A0CA3, #050505); */
   overflow-x: hidden;
-  overflow-x: hidden;
-  /* Only hide horizontal overflow */
+  /* Reserve space for the fixed global Navbar (~65px tall) */
+  padding-top: 65px;
 }
 
 .container {

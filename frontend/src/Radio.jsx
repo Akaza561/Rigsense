@@ -1,26 +1,53 @@
 import React from 'react';
 import styled from 'styled-components';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Radio = () => {
-    return (
-        <StyledWrapper>
-            <div className="radio-group">
-                <div className="slider" />
-                <div className="radio-option">
-                    <input type="radio" name="option" id="option1" defaultChecked />
-                    <label htmlFor="option1" className="radio-label">Home</label>
-                </div>
-                <div className="radio-option">
-                    <input type="radio" name="option" id="option2" />
-                    <label htmlFor="option2" className="radio-label">Saved</label>
-                </div>
-                <div className="radio-option">
-                    <input type="radio" name="option" id="option3" />
-                    <label htmlFor="option3" className="radio-label">Settings</label>
-                </div>
-            </div>
-        </StyledWrapper>
-    );
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const getActive = () => {
+    if (location.pathname === '/saved') return 'saved';
+    if (location.pathname === '/settings') return 'settings';
+    return 'home';
+  };
+
+  const active = getActive();
+
+  return (
+    <StyledWrapper>
+      <div className="radio-group">
+        <div className="slider" />
+        <div className="radio-option">
+          <input
+            type="radio" name="option" id="option1"
+            checked={active === 'home'}
+            onChange={() => navigate('/')}
+            readOnly
+          />
+          <label htmlFor="option1" className="radio-label" onClick={() => navigate('/')}>Home</label>
+        </div>
+        <div className="radio-option">
+          <input
+            type="radio" name="option" id="option2"
+            checked={active === 'saved'}
+            onChange={() => navigate('/saved')}
+            readOnly
+          />
+          <label htmlFor="option2" className="radio-label" onClick={() => navigate('/saved')}>Saved</label>
+        </div>
+        <div className="radio-option">
+          <input
+            type="radio" name="option" id="option3"
+            checked={active === 'settings'}
+            onChange={() => navigate('/settings')}
+            readOnly
+          />
+          <label htmlFor="option3" className="radio-label">Settings</label>
+        </div>
+      </div>
+    </StyledWrapper>
+  );
 }
 
 const StyledWrapper = styled.div`
@@ -96,7 +123,7 @@ const StyledWrapper = styled.div`
   }
 
   .radio-option input[type="radio"]:checked + .radio-label {
-    color: #667eea;
+    color: #00c2d4;
     text-shadow: none;
   }
 
