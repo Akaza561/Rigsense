@@ -175,29 +175,39 @@ const saveBuild = async (req, res) => {
 const registerUser = async (req, res) => {
     const { username, email, password } = req.body;
 
-    const userExists = await User.findOne({ email });
+    try {
+        // Check for existing email
+        const emailExists = await User.findOne({ email });
+        if (emailExists) {
+            return res.status(400).json({ message: 'An account with this email already exists' });
+        }
 
-    if (userExists) {
-        res.status(400).json({ message: 'User already exists' });
-        return;
-    }
+        // Check for existing username
+        const usernameExists = await User.findOne({ username });
+        if (usernameExists) {
+            return res.status(400).json({ message: 'Username is already taken, please choose another' });
+        }
 
-    const user = await User.create({
-        username,
-        email,
-        password
-    });
+        const user = await User.create({ username, email, password });
 
-    if (user) {
-        res.status(201).json({
-            _id: user._id,
-            username: user.username,
-            email: user.email,
-            isAdmin: user.isAdmin,
-            token: generateToken(user._id)
-        });
-    } else {
-        res.status(400).json({ message: 'Invalid user data' });
+        if (user) {
+            res.status(201).json({
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                isAdmin: user.isAdmin,
+                token: generateToken(user._id)
+            });
+        } else {
+            res.status(400).json({ message: 'Invalid user data' });
+        }
+    } catch (error) {
+        // Catch any remaining DB errors (e.g. duplicate key race condition)
+        if (error.code === 11000) {
+            const field = Object.keys(error.keyValue)[0];
+            return res.status(400).json({ message: `${field.charAt(0).toUpperCase() + field.slice(1)} is already taken` });
+        }
+        res.status(500).json({ message: error.message || 'Registration failed' });
     }
 };
 

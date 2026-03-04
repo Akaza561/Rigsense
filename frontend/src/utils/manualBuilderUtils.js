@@ -2,35 +2,88 @@ export const calculateTotal = (selections) => {
     return Object.values(selections).reduce((total, part) => total + (part?.price || 0), 0);
 };
 
-export const validateBuild = (selections) => {
+export const validateBuild = (selections, components = {}) => {
     const issues = [];
     const { cpu, motherboard, ram, gpu, psu } = selections;
 
-    // 1. Socket Compatibility
+    // 1. Socket Compatibility — suggest a compatible motherboard
     if (cpu && motherboard) {
         if (cpu.socket !== motherboard.socket) {
-            issues.push(`Compatibility Error: CPU Socket (${cpu.socket}) does not match Motherboard Socket (${motherboard.socket}).`);
+            // Suggest: best mobo with same socket as CPU, closest price
+            const fixMobo = (components.motherboard || [])
+                .filter(m => m.socket === cpu.socket)
+                .sort((a, b) => Math.abs(a.price - motherboard.price) - Math.abs(b.price - motherboard.price))[0];
+
+            // Suggest: best CPU with same socket as mobo (alternative direction)
+            const fixCpu = (components.cpu || components.processor || [])
+                .filter(c => c.socket === motherboard.socket)
+                .sort((a, b) => Math.abs(a.price - cpu.price) - Math.abs(b.price - cpu.price))[0];
+
+            issues.push({
+                message: `CPU Socket (${cpu.socket}) does not match Motherboard Socket (${motherboard.socket}).`,
+                affectedParts: ['cpu', 'motherboard'],
+                fixes: [
+                    fixMobo && {
+                        label: 'Replace Motherboard',
+                        partKey: 'motherboard',
+                        part: fixMobo,
+                        reason: `${fixMobo.name} supports ${cpu.socket} socket — compatible with your CPU.`,
+                    },
+                    fixCpu && {
+                        label: 'Replace CPU',
+                        partKey: 'cpu',
+                        part: fixCpu,
+                        reason: `${fixCpu.name} uses ${motherboard.socket} socket — compatible with your Motherboard.`,
+                    },
+                ].filter(Boolean),
+            });
         }
     }
 
-    // 2. RAM Compatibility
+    // 2. RAM Type Compatibility — suggest compatible RAM
     if (ram && motherboard) {
         const ramType = ram.ram_type?.toUpperCase();
         const moboRamType = motherboard.ram_type?.toUpperCase();
 
         if (ramType && moboRamType && !moboRamType.includes(ramType)) {
-            issues.push(`Compatibility Error: RAM Type (${ramType}) is not supported by Motherboard (${moboRamType}).`);
+            const fixRam = (components.ram || [])
+                .filter(r => moboRamType.includes(r.ram_type?.toUpperCase()))
+                .sort((a, b) => Math.abs(a.price - ram.price) - Math.abs(b.price - ram.price))[0];
+
+            issues.push({
+                message: `RAM Type (${ramType}) is not supported by your Motherboard (requires ${moboRamType}).`,
+                affectedParts: ['ram'],
+                fixes: fixRam ? [{
+                    label: 'Replace RAM',
+                    partKey: 'ram',
+                    part: fixRam,
+                    reason: `${fixRam.name} uses ${fixRam.ram_type?.toUpperCase()} — compatible with your Motherboard.`,
+                }] : [],
+            });
         }
     }
 
-    // 3. Power Supply (PSU) Check
+    // 3. PSU Wattage — suggest a more powerful PSU
     if (psu) {
         const cpuWatt = cpu?.watt || 0;
         const gpuWatt = gpu?.watt || 0;
         const estimatedLoad = cpuWatt + gpuWatt + 100;
 
         if (psu.watt < estimatedLoad) {
-            issues.push(`Power Warning: PSU Wattage (${psu.watt}W) may be insufficient. Estimated Load: ${estimatedLoad}W.`);
+            const fixPsu = (components.psu || [])
+                .filter(p => p.watt >= estimatedLoad)
+                .sort((a, b) => a.price - b.price)[0];
+
+            issues.push({
+                message: `PSU wattage (${psu.watt}W) is insufficient. Estimated system load: ${estimatedLoad}W.`,
+                affectedParts: ['psu'],
+                fixes: fixPsu ? [{
+                    label: 'Replace PSU',
+                    partKey: 'psu',
+                    part: fixPsu,
+                    reason: `${fixPsu.name} provides ${fixPsu.watt}W — enough headroom for your CPU + GPU.`,
+                }] : [],
+            });
         }
     }
 
@@ -198,7 +251,7 @@ const generatePartSuggestions = (selections, components) => {
 };
 
 export const generateManualBuildResult = (selections, components, targetResolution) => {
-    const issues = validateBuild(selections);
+    const issues = validateBuild(selections, components);   // ← pass components
     const bottlenecks = checkBottlenecks(selections, components, targetResolution);
     const total = calculateTotal(selections);
     const upgrades = generatePartSuggestions(selections, components);

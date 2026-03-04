@@ -24,7 +24,8 @@ const userSchema = mongoose.Schema({
     },
     firebaseUid: {
         type: String,
-        unique: true
+        unique: true,
+        sparse: true  // allows multiple docs with null/missing firebaseUid
     },
     hasSetUsername: {
         type: Boolean,

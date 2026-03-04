@@ -41,6 +41,15 @@ const Navbar = () => {
                     </AvatarBtn>
                 )}
                 <SimpleButton username={user?.username} />
+                {window.history.length > 1 && (
+                    <BackBtn onClick={() => navigate('/')} title="Go to Home">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                        Back
+                    </BackBtn>
+                )}
             </LeftGroup>
             <RightGroup>
                 <AuthButton text={user ? 'Log Out' : 'Log In / Register'} onClick={handleAuthClick} />
@@ -77,6 +86,28 @@ const LeftGroup = styled.div`
     display: flex;
     align-items: center;
     gap: 0.6rem;
+`;
+
+const BackBtn = styled.button`
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.75);
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.18s;
+    &:hover {
+        background: rgba(0, 194, 212, 0.12);
+        border-color: rgba(0, 194, 212, 0.4);
+        color: #00c2d4;
+        transform: translateX(-2px);
+    }
 `;
 
 const AvatarBtn = styled.button`

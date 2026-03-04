@@ -117,6 +117,33 @@ const Actions = styled.div`
   align-items: center;
 `;
 
+const FixCard = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  background: rgba(0, 194, 212, 0.06);
+  border: 1px solid rgba(0, 194, 212, 0.2);
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+`;
+
+const ApplyFixBtn = styled.button`
+  background: linear-gradient(135deg, #00c2d4, #0099aa);
+  border: none;
+  color: #fff;
+  padding: 0.3rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: inherit;
+  transition: all 0.18s;
+  white-space: nowrap;
+  &:hover { transform: scale(1.04); box-shadow: 0 2px 12px rgba(0,194,212,0.35); }
+  &:active { transform: scale(0.97); }
+`;
+
 const ActionBtn = styled.button`
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -247,7 +274,7 @@ const getManualPartInfo = (part) => {
   return lines.join(' · ');
 };
 
-function BuildResult({ build, useCase, onReset, onEdit, onDelete, onSelect, onSave }) {
+function BuildResult({ build, useCase, onReset, onEdit, onDelete, onSelect, onSave, onApplyFix }) {
   if (!build) return null;
 
   const isManualBuild = build.type === 'Manual Build';
@@ -268,15 +295,45 @@ function BuildResult({ build, useCase, onReset, onEdit, onDelete, onSelect, onSa
         <TotalPrice>₹{build.totalPrice.toLocaleString()}</TotalPrice>
       </Header>
 
-      {/* Compatibility Issues (Red) */}
+      {/* Compatibility Issues */}
       {build.issues && build.issues.length > 0 && (
         <IssuesContainer>
-          <h3 style={{ color: '#ff4d4d', marginTop: 0, fontSize: '1.2rem' }}>⚠️ Compatibility Issues</h3>
-          <ul style={{ paddingLeft: '20px', color: '#ffcccc', margin: '0.5rem 0 0' }}>
-            {build.issues.map((issue, idx) => (
-              <li key={idx} style={{ marginBottom: '0.5rem' }}>{issue}</li>
-            ))}
-          </ul>
+          <h3 style={{ color: '#ff4d4d', marginTop: 0, fontSize: '1.1rem' }}>⚠️ Compatibility Issues</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
+            {build.issues.map((issue, idx) => {
+              // Support both plain strings and structured objects
+              const isStructured = typeof issue === 'object' && issue !== null;
+              const message = isStructured ? issue.message : issue;
+              const fixes = isStructured ? (issue.fixes || []) : [];
+              return (
+                <div key={idx} style={{ borderLeft: '3px solid #ff4d4d', paddingLeft: '0.75rem' }}>
+                  <p style={{ color: '#ffcccc', margin: 0, fontSize: '0.9rem' }}>❌ {message}</p>
+                  {fixes.length > 0 && (
+                    <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {fixes.map((fix, fi) => (
+                        <FixCard key={fi}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '0.7rem', color: '#00c2d4', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.2rem' }}
+                            >✅ Suggested Fix — {fix.label}</div>
+                            <div style={{ fontWeight: 600, color: '#fff', fontSize: '0.9rem' }}>{fix.part.name}</div>
+                            <div style={{ color: '#aaa', fontSize: '0.78rem', marginTop: '0.15rem' }}>{fix.reason}</div>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.3rem', flexShrink: 0 }}>
+                            <span style={{ color: '#00e5ff', fontWeight: 700, fontSize: '0.9rem' }}>₹{fix.part.price?.toLocaleString()}</span>
+                            {onApplyFix && (
+                              <ApplyFixBtn onClick={() => onApplyFix(fix.partKey, fix.part)}>
+                                Apply Fix
+                              </ApplyFixBtn>
+                            )}
+                          </div>
+                        </FixCard>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </IssuesContainer>
       )}
 

@@ -11,49 +11,78 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
-                // User is signed in to Firebase
-                // Get ID token
                 const token = await currentUser.getIdToken();
-
-                // Verify with backend and get user data
                 try {
                     const res = await fetch('http://localhost:5000/api/users/google-login', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ token }),
                     });
-
                     if (res.ok) {
                         const data = await res.json();
-                        setUser(data); // Set user data from backend (includes isAdmin, etc.)
+                        setUser(data);
                         localStorage.setItem('userInfo', JSON.stringify(data));
                     } else {
-                        console.error('Backend Login Failed');
                         setUser(null);
                     }
-                } catch (error) {
-                    console.error('Backend Connection Error', error);
+                } catch {
                     setUser(null);
                 }
             } else {
-                // User is signed out
                 setUser(null);
                 localStorage.removeItem('userInfo');
             }
             setLoading(false);
         });
-
         return () => unsubscribe();
     }, []);
 
+    /* ── Email / Password login ─────────────────── */
+    const login = async (email, password) => {
+        try {
+            const res = await fetch('http://localhost:5000/api/users/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setUser(data);
+                localStorage.setItem('userInfo', JSON.stringify(data));
+                return { success: true };
+            }
+            return { success: false, message: data.message || 'Login failed' };
+        } catch {
+            return { success: false, message: 'Server error' };
+        }
+    };
+
+    /* ── Create new account ─────────────────────── */
+    const register = async (username, email, password) => {
+        try {
+            const res = await fetch('http://localhost:5000/api/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setUser(data);
+                localStorage.setItem('userInfo', JSON.stringify(data));
+                return { success: true };
+            }
+            return { success: false, message: data.message || 'Registration failed' };
+        } catch {
+            return { success: false, message: 'Server error' };
+        }
+    };
+
+    /* ── Google sign-in ─────────────────────────── */
     const googleSignIn = async () => {
         try {
             await signInWithPopup(auth, googleProvider);
             return { success: true };
         } catch (error) {
-            console.error("Google Sign In Error", error);
             return { success: false, message: error.message };
         }
     };
@@ -64,12 +93,12 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
             localStorage.removeItem('userInfo');
         } catch (error) {
-            console.error("Logout Error", error);
+            console.error('Logout Error', error);
         }
     };
 
     return (
-        <AuthContext.Provider value={{ user, setUser, googleSignIn, logout, loading }}>
+        <AuthContext.Provider value={{ user, setUser, login, register, googleSignIn, logout, loading }}>
             {!loading && children}
         </AuthContext.Provider>
     );

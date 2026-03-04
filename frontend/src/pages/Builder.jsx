@@ -11,6 +11,7 @@ import AuthContext from '../context/AuthContext'
 
 import { generateBuild } from '../utils/builderLogic'
 import { generateManualBuildResult } from '../utils/manualBuilderUtils'
+import BuildCompareChart from '../components/BuildCompareChart'
 
 const AnoAI = lazy(() => import('../components/ui/animated-shader-background'))
 
@@ -356,6 +357,36 @@ function Builder() {
         setSelectedTab(0); // CRITICAL: Reset tab to 0 as we now have only 1 build
     };
 
+    const handleApplyFix = (partKey, fixPart) => {
+        // Build current selections, syncing from AI build if needed
+        const currentBuild = buildResult?.builds ? buildResult.builds[selectedTab] : buildResult;
+        let currentSelections = { ...manualSelections };
+
+        if (currentBuild && (currentBuild.type !== 'Manual Build' || !manualSelections.cpu)) {
+            currentSelections = {};
+            const partTypes = ['cpu', 'gpu', 'motherboard', 'ram', 'storage', 'psu', 'case'];
+            currentBuild.parts.forEach(p => {
+                if (!p?.name) return;
+                const key = p.category.toLowerCase();
+                const full = components[key]?.find(c => c.name === p.name) || p;
+                currentSelections[key] = full;
+            });
+        }
+
+        // Swap the fixed part in
+        const newSelections = { ...currentSelections, [partKey]: fixPart };
+        setManualSelections(newSelections);
+
+        // Regenerate build with fix applied
+        const newBuild = generateManualBuildResult(newSelections, components, targetResolution);
+        setBuildResult(prev => ({
+            ...prev,
+            builds: [newBuild],
+            reasoning: newBuild.issues.length > 0 ? 'Compatibility Issues Found' : 'Custom Configuration',
+        }));
+        setSelectedTab(0);
+    };
+
     const currentBuild = buildResult?.builds ? buildResult.builds[selectedTab] : buildResult
 
     const { user } = useContext(AuthContext);
@@ -453,6 +484,8 @@ function Builder() {
                                 </TabsContainer>
                             )}
 
+
+
                             <m.div
                                 key={selectedTab}
                                 initial={{ opacity: 0, x: 20 }}
@@ -469,10 +502,16 @@ function Builder() {
                                     }}
                                     onEdit={handleEditPart}
                                     onDelete={handleDeletePart}
-                                    onSelect={handleEditPart} // Select logic is same as edit (go to builder)
+                                    onSelect={handleEditPart}
                                     onSave={handleSaveBuild}
+                                    onApplyFix={handleApplyFix}
                                 />
                             </m.div>
+
+                            {/* Comparison chart — shown below the build detail */}
+                            {buildResult.builds && buildResult.builds.length > 1 && (
+                                <BuildCompareChart builds={buildResult.builds} />
+                            )}
                         </>
                     )}
                 </Container>
