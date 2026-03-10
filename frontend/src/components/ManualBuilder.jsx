@@ -4,6 +4,9 @@ import { m } from 'framer-motion';
 import Button from '../Button';
 import { generateManualBuildResult, calculateTotal } from '../utils/manualBuilderUtils';
 
+const GAMING_USE_CASES = ['Gaming'];
+const ALL_USE_CASES = ['Gaming', 'Programming', 'Video Editing', 'General Use'];
+
 const FormSection = styled(m.div)`
   width: 100%;
   max-width: 800px;
@@ -67,23 +70,30 @@ const TotalPrice = styled.div`
   -webkit-text-fill-color: transparent;
 `;
 
-const ManualBuilder = ({ onBuild, selections, setSelections, targetResolution, setTargetResolution }) => {
+const ManualBuilder = ({
+    onBuild,
+    selections,
+    setSelections,
+    targetResolution,
+    setTargetResolution,
+    useCase,
+    setUseCase,
+}) => {
     const [components, setComponents] = useState({});
     const [loading, setLoading] = useState(true);
+
+    const isGaming = GAMING_USE_CASES.includes(useCase);
 
     useEffect(() => {
         const fetchComponents = async () => {
             try {
                 const res = await fetch('http://localhost:5000/api/components');
                 const data = await res.json();
-
-                // Map backend keys to frontend keys
                 const mappedData = {
                     ...data,
                     cpu: data.processor || [],
-                    storage: [...(data.ssd || []), ...(data.hdd || [])], // Combine SSD and HDD if present
+                    storage: [...(data.ssd || []), ...(data.hdd || [])],
                 };
-
                 setComponents(mappedData);
             } catch (error) {
                 console.error('Failed to fetch components', error);
@@ -101,12 +111,17 @@ const ManualBuilder = ({ onBuild, selections, setSelections, targetResolution, s
     };
 
     const handleBuildClick = () => {
-        // Use utility to generate result
-        const buildObject = generateManualBuildResult(selections, components, targetResolution);
+        const resolvedResolution = isGaming ? targetResolution : '1440p';
+        const buildObject = generateManualBuildResult(selections, components, resolvedResolution, useCase || 'General Use');
+
+        // Tag the build with the use case so it's preserved in results
+        buildObject.useCase = useCase;
+        buildObject.type = `Manual Build`;
 
         onBuild({
             builds: [buildObject],
-            reasoning: buildObject.issues.length > 0 ? "Compatibility Issues Found" : "Custom Configuration"
+            reasoning: buildObject.issues.length > 0 ? 'Compatibility Issues Found' : `Custom ${useCase || 'Manual'} Build`,
+            useCase,
         });
     };
 
@@ -120,19 +135,37 @@ const ManualBuilder = ({ onBuild, selections, setSelections, targetResolution, s
         >
             <SectionTitle>Custom Selection</SectionTitle>
 
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                {/* Use Case selector — always visible */}
                 <SelectGroup style={{ width: '200px' }}>
-                    <Label>Target Resolution</Label>
+                    <Label>Use Case</Label>
                     <Select
-                        value={targetResolution}
-                        onChange={(e) => setTargetResolution(e.target.value)}
-                        style={{ borderColor: '#00e5ff' }}
+                        value={useCase || ''}
+                        onChange={(e) => setUseCase && setUseCase(e.target.value)}
+                        style={{ borderColor: '#00c2d4' }}
                     >
-                        <option value="1080p">1080p (FHD)</option>
-                        <option value="1440p">1440p (2K)</option>
-                        <option value="4K">4K (UHD)</option>
+                        <option value="">Select Use Case</option>
+                        {ALL_USE_CASES.map(uc => (
+                            <option key={uc} value={uc}>{uc}</option>
+                        ))}
                     </Select>
                 </SelectGroup>
+
+                {/* Resolution — only for Gaming */}
+                {isGaming && (
+                    <SelectGroup style={{ width: '200px' }}>
+                        <Label>Target Resolution</Label>
+                        <Select
+                            value={targetResolution}
+                            onChange={(e) => setTargetResolution(e.target.value)}
+                            style={{ borderColor: '#00e5ff' }}
+                        >
+                            <option value="1080p">1080p (FHD)</option>
+                            <option value="1440p">1440p (2K)</option>
+                            <option value="4K">4K (UHD)</option>
+                        </Select>
+                    </SelectGroup>
+                )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

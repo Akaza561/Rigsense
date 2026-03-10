@@ -276,6 +276,8 @@ function Builder() {
     const handleManualBuild = (result) => {
         setBuildResult(result)
         setSelectedTab(0)
+        // preserve whatever use case was active (AI or manually set)
+        if (result.useCase) setSelectedUseCase(result.useCase)
     }
 
     const syncAiBuildToManual = (currentBuild) => {
@@ -347,7 +349,7 @@ function Builder() {
         setManualSelections(newSelections);
 
         // Regenerate the manual build result immediately
-        const newBuild = generateManualBuildResult(newSelections, components, targetResolution);
+        const newBuild = generateManualBuildResult(newSelections, components, targetResolution, selectedUseCase);
 
         setBuildResult(prev => ({
             ...prev,
@@ -378,7 +380,7 @@ function Builder() {
         setManualSelections(newSelections);
 
         // Regenerate build with fix applied
-        const newBuild = generateManualBuildResult(newSelections, components, targetResolution);
+        const newBuild = generateManualBuildResult(newSelections, components, targetResolution, selectedUseCase);
         setBuildResult(prev => ({
             ...prev,
             builds: [newBuild],
@@ -456,6 +458,8 @@ function Builder() {
                                 setSelections={setManualSelections}
                                 targetResolution={targetResolution}
                                 setTargetResolution={setTargetResolution}
+                                useCase={selectedUseCase}
+                                setUseCase={setSelectedUseCase}
                             />
                         ) : (
                             <BuilderForm onBuild={handleBuild} isBuilding={isBuilding} />

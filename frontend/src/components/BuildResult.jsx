@@ -278,6 +278,8 @@ function BuildResult({ build, useCase, onReset, onEdit, onDelete, onSelect, onSa
   if (!build) return null;
 
   const isManualBuild = build.type === 'Manual Build';
+  // Use the prop first, then fall back to what the build itself carries
+  const effectiveUseCase = useCase || build.useCase || 'Custom';
   const hasIssues = build.issues && build.issues.length > 0;
   const benchmarks = useMemo(() => hasIssues ? null : estimateBenchmarks(build), [build, hasIssues]);
 
@@ -289,8 +291,8 @@ function BuildResult({ build, useCase, onReset, onEdit, onDelete, onSelect, onSa
     >
       <Header>
         <div>
-          <h2 style={{ margin: 0 }}>Your {useCase} Rig</h2>
-          <p style={{ margin: '0.5rem 0 0', opacity: 0.7 }}>Optimized for maximum value</p>
+          <h2 style={{ margin: 0 }}>Your {effectiveUseCase} Rig</h2>
+          <p style={{ margin: '0.5rem 0 0', opacity: 0.7 }}>Optimized for {effectiveUseCase}</p>
         </div>
         <TotalPrice>₹{build.totalPrice.toLocaleString()}</TotalPrice>
       </Header>
@@ -340,29 +342,60 @@ function BuildResult({ build, useCase, onReset, onEdit, onDelete, onSelect, onSa
       {/* Bottlenecks & Suggestions (Orange) */}
       {build.bottlenecks && build.bottlenecks.length > 0 && (
         <BottleneckContainer>
-          <h3 style={{ color: '#ffa600', marginTop: 0, fontSize: '1.2rem' }}>⚠️ Performance Analysis</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
-            {build.bottlenecks.map((b, idx) => (
-              <div key={idx}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#ffcc80', fontWeight: 'bold' }}>
-                  <span>{b.type}</span>
-                  {b.percentage && <span>{b.percentage}% Detected</span>}
+          <h3 style={{ color: '#ffa600', marginTop: 0, fontSize: '1.1rem' }}>⚠️ Performance Analysis</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.75rem' }}>
+            {build.bottlenecks.map((b, idx) => {
+              // Map bottleneck type → part category key for apply fix
+              const partKeyMap = {
+                'GPU Bottleneck': 'gpu',
+                'CPU Bottleneck': 'cpu',
+                'Low RAM': 'ram',
+                'Low VRAM': 'gpu',
+              };
+              const partKey = partKeyMap[b.type] || null;
+
+              return (
+                <div key={idx} style={{ borderLeft: '3px solid #ffa600', paddingLeft: '0.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#ffcc80', fontWeight: 700, fontSize: '0.95rem' }}>
+                    <span>{b.type}</span>
+                    {b.percentage && <span style={{ color: '#ff9f35' }}>{b.percentage}% Detected</span>}
+                  </div>
+                  <p style={{ margin: '0.35rem 0 0.5rem', color: '#ffe0b2', fontSize: '0.88rem' }}>{b.details}</p>
+
+                  {b.suggestion && (
+                    <FixCard style={{ borderColor: 'rgba(255,160,0,0.3)', background: 'rgba(255,160,0,0.06)' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.7rem', color: '#ffa600', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.2rem' }}>
+                          ✅ Suggested Upgrade — {b.type === 'Low RAM' ? 'Replace RAM' : b.type === 'GPU Bottleneck' ? 'Replace GPU' : b.type === 'CPU Bottleneck' ? 'Replace CPU' : 'Replace GPU'}
+                        </div>
+                        <div style={{ fontWeight: 600, color: '#fff', fontSize: '0.9rem' }}>{b.suggestion.name}</div>
+                        {b.suggestion.performance_score && (
+                          <div style={{ color: '#aaa', fontSize: '0.78rem', marginTop: '0.15rem' }}>
+                            Performance score: <strong style={{ color: '#ffa600' }}>{b.suggestion.performance_score}</strong>
+                            {' '}— reduces bottleneck by improving {partKey?.toUpperCase()} output
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.3rem', flexShrink: 0 }}>
+                        <span style={{ color: '#00e5ff', fontWeight: 700, fontSize: '0.9rem' }}>₹{b.suggestion.price?.toLocaleString()}</span>
+                        {onApplyFix && partKey && (
+                          <ApplyFixBtn
+                            style={{ background: 'linear-gradient(135deg, #ffa600, #cc7a00)' }}
+                            onClick={() => onApplyFix(partKey, b.suggestion)}
+                          >
+                            Apply Fix
+                          </ApplyFixBtn>
+                        )}
+                      </div>
+                    </FixCard>
+                  )}
                 </div>
-                <p style={{ margin: '0.5rem 0', color: '#ffe0b2', fontSize: '0.95rem' }}>{b.details}</p>
-                {b.suggestion && (
-                  <SuggestionBox>
-                    <div>
-                      <div style={{ fontSize: '0.8rem', color: '#aaa', textTransform: 'uppercase' }}>Recommended Upgrade</div>
-                      <div style={{ color: '#fff', fontWeight: '500' }}>{b.suggestion.name}</div>
-                    </div>
-                    <div style={{ color: '#00e5ff', fontWeight: 'bold' }}>₹{b.suggestion.price.toLocaleString()}</div>
-                  </SuggestionBox>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </BottleneckContainer>
       )}
+
 
       <PartList>
         {build.parts.map((p, i) => (

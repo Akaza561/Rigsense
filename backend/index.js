@@ -1,3 +1,7 @@
+const dns = require('dns');
+// Force Google DNS — fixes querySrv ECONNREFUSED on restrictive ISPs/networks
+dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
+
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
